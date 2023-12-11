@@ -1,23 +1,16 @@
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import jdk.jfr.Description;
-
 class Eight {
-    private static final String BEGIN = "AAA";
 
     public static void main(String[] args) throws IOException, InterruptedException {
         var lines = Files.readString(Path.of(args[0]));
@@ -28,57 +21,45 @@ class Eight {
         Stream<ParsedLine> parsed = Arrays.stream(split[1].split("\n"))
                 .map(ParsedLine::forLine);
         var nodeMap = mapFactory.createMap(parsed);
-        List<Eight.Node> startNodes = findStartNodes(nodeMap);
-        List<Eight.SearchState> descriptions = startNodes.stream()
-            .map(node -> findEndings(node, instructions))
-           .map(SearchState::new)
-           .toList();
-        System.out.println(descriptions);
-
-       while(true){
-            Comparator<Eight.SearchState> comparingLong = Comparator.comparingLong(SearchState::lastVal);
-            long found = descriptions.stream().min(comparingLong).orElseThrow().findNext(); 
-               if(descriptions.stream() .allMatch(i-> i.lastVal == found)){
-                   System.out.println("found " + found);
-                   return;
-               }
-        
-       }
-        
+        System.out.println("Solution 1 " + caclulateSolution1(instructions, nodeMap.get("AAA")));
+        System.out.println("Solution 2 " + calculateSolution2(instructions, nodeMap));
     }
 
-    static class SearchState{
+	private static long calculateSolution2(String instructions, Map<String, Eight.Node> nodeMap) {
+        List<Eight.Node> startNodes = findStartNodes(nodeMap);
+		List<Eight.SearchState> descriptions = startNodes.stream()
+                .map(node -> findEndings(node, instructions))
+                .map(SearchState::new)
+                .toList();
+
+        while (true) {
+            Comparator<Eight.SearchState> comparingLong = Comparator.comparingLong(SearchState::getLastVal);
+            long found = descriptions.stream().min(comparingLong).orElseThrow().findNext();
+            if (descriptions.stream().allMatch(i -> i.getLastVal() == found)) {
+                return found;
+            }
+
+        }
+	}
+
+    static class SearchState {
         private final Eight.EndingDescription description;
-        private final HashSet<Long> knownValues = new HashSet<>();
         private long lastVal;
 
-        SearchState(EndingDescription description){
+        SearchState(EndingDescription description) {
             this.description = description;
-            knownValues.add(description.initialOffset());
             lastVal = description.initialOffset();
         }
 
-        boolean contains(long val){
-            return knownValues.contains(val);
-        }
 
-        Long findNext(){
+        Long findNext() {
             lastVal += description.offset();
-            //knownValues.add(lastVal);
             return lastVal;
         }
 
-        long lastVal(){
+        long getLastVal() {
             return lastVal;
         }
-
-        @Override
-        public String toString() {
-            return "SearchState [description=" + description + ", knownValues=" + knownValues + "]";
-        }
-
-
-
     }
 
     static EndingDescription findEndings(Node node, String instructions) {
@@ -106,7 +87,6 @@ class Eight {
     record EndingDescription(long initialOffset, long offset) {
     }
 
-
     private static List<Eight.Node> findStartNodes(Map<String, Node> nodeMap) {
         return nodeMap.values()
                 .stream()
@@ -114,8 +94,7 @@ class Eight {
                 .toList();
     }
 
-    private static int getSolutionOne(String instructions,
-            Eight.Node currentNode) {
+    private static int caclulateSolution1(String instructions, Eight.Node currentNode) {
         int numberOfStepsTaken = 0;
         while (!currentNode.getLocation().equals("ZZZ")) {
             int instructionIndex = numberOfStepsTaken++ % instructions.length();
