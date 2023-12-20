@@ -26,11 +26,8 @@
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
+                <artifactId>colorscheme</artifactId>
                 <version>3.1.0</version>
-                <configuration>
-                    <mainClass>Eleven</mainClass>
-                </configuration>
         </plugin>
     </plugins>
     </build>
