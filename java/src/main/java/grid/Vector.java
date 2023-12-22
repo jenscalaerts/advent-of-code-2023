@@ -1,3 +1,4 @@
+package grid;
 enum Vector {
     N(-1, 0),
     E(0, 1),

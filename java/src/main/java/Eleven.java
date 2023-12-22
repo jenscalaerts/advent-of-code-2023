@@ -10,8 +10,6 @@ public class Eleven {
         List<String> rows = Files.readAllLines(Path.of(args[0]));
         int expansionRate = Integer.valueOf(args[1]);
         Grid grid = new Grid(rows);
-        //expandsRows(grid);
-        //expandsColumns(grid);
         List<Coordinate> allOfSymbol = grid.findAllOfSymbol('#');
 
         List<Integer> emptyRows = getEmptyRows(grid);
