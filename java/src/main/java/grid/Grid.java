@@ -13,9 +13,16 @@ public class Grid {
                 .collect(Collectors.toList());
     }
 
-
-    public Grid(String data){
+    public Grid(String data) {
         this(List.of(data.split("\n")));
+    }
+
+    public Grid(Grid grid){
+        data = grid.getRows()
+        .stream()
+        .map(ArrayList::new)
+        .collect(Collectors.toList());
+
     }
 
     public char getSymbolAt(Coordinate coordinate) {
@@ -85,5 +92,47 @@ public class Grid {
     public void insertColumns(int i, char c) {
         data.forEach(row -> row.add(i, c));
     }
+
+    public int getHeight() {
+        return data.size();
+    }
+
+    public int getWidth() {
+        return data.get(0).size();
+
+    }
+
+    public void swap(Coordinate from, Coordinate to) {
+        char fromChar = getSymbolAt(from);
+        char toChar = getSymbolAt(to);
+        setSymbolAt(from, toChar);
+        setSymbolAt(to, fromChar);
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((data == null) ? 0 : data.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Grid other = (Grid) obj;
+        if (data == null) {
+            if (other.data != null)
+                return false;
+        } else if (!data.equals(other.data))
+            return false;
+        return true;
+    }
+
 
 }

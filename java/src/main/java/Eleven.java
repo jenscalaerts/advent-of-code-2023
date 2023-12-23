@@ -4,6 +4,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import grid.Coordinate;
+import grid.Grid;
+
 public class Eleven {
     public static void main(String[] args) throws IOException {
 

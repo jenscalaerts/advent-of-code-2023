@@ -1,5 +1,6 @@
 package grid;
-enum Vector {
+
+public enum Vector {
     N(-1, 0),
     E(0, 1),
     S(1, 0),
@@ -21,4 +22,16 @@ enum Vector {
         return column;
     }
 
+    public boolean isVertical(){
+        return row != 0;
+    }
+
+    public Vector invert() {
+        return switch (this) {
+            case N -> S;
+            case S -> N;
+            case E -> W;
+            case W -> E;
+        };
+    }
 }
