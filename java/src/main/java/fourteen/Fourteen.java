@@ -9,7 +9,7 @@ import java.util.List;
 
 import grid.Grid;
 import grid.Coordinate;
-import grid.Vector;
+import grid.Direction;
 
 public class Fourteen {
     private static final char SQUARED_ROCK = '#';
@@ -19,7 +19,7 @@ public class Fourteen {
     public static void main(String[] args) throws IOException {
         String input = Files.readString(Path.of(args[0]));
         Grid grid = new Grid(input);
-        rollBoulders2(grid, Vector.N);
+        rollBoulders2(grid, Direction.N);
         int sum = northWeight(grid);
         System.out.println("Weight 1:" + sum);
 
@@ -45,7 +45,7 @@ public class Fourteen {
     }
 
     private static void doARotation(Grid grid) {
-        for (Vector direction : List.of(Vector.N, Vector.W, Vector.S, Vector.E)) {
+        for (Direction direction : List.of(Direction.N, Direction.W, Direction.S, Direction.E)) {
             rollBoulders2(grid, direction);
         }
     }
@@ -71,8 +71,8 @@ public class Fourteen {
         }
     }
 
-    private static void rollBoulders2(Grid grid, Vector direction) {
-        Vector searchingDirection = direction.invert();
+    private static void rollBoulders2(Grid grid, Direction direction) {
+        Direction searchingDirection = direction.invert();
 
         Coordinate start = switch (direction) {
             case N, W -> new Coordinate(0, 0);
@@ -93,7 +93,7 @@ public class Fourteen {
                 }
                 next = next.plus(searchingDirection);
             }
-            start = start.plus(direction.isVertical() ? Vector.E : Vector.S);
+            start = start.plus(direction.isVertical() ? Direction.E : Direction.S);
         }
 
     }

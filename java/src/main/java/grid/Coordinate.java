@@ -1,6 +1,6 @@
 package grid;
 public record Coordinate(int row, int column) {
-    public Coordinate plus(Vector vector) {
+    public Coordinate plus(Direction vector) {
         return new Coordinate(row + vector.getRow(), column + vector.getColumn());
     }
 
