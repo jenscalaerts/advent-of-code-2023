@@ -84,9 +84,13 @@ public class Grid {
     }
 
     public void print() {
-        data.stream()
-                .map(i -> String.valueOf(i))
-                .forEach(System.out::println);
+        for (int i = 0; i < data.size(); i++) {
+            List<Character> row = data.get(i);
+            for (int j = 0; j < row.size(); j++) {
+                System.out.print(row.get(j));
+            }
+            System.out.println();
+        }
     }
 
     public void insertColumns(int i, char c) {

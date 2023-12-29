@@ -9,4 +9,8 @@ public record Coordinate(int row, int column) {
         + Math.abs(this.column() - coordinate.column());
         
     }
+
+	public Coordinate plus(Direction direction, int length) {
+        return new Coordinate(row + direction.getRow() * length, column + direction.getColumn() * length);
+	}
 }

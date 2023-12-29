@@ -1,5 +1,7 @@
 package grid;
 
+import java.util.stream.Stream;
+
 public enum Direction {
     N(-1, 0),
     E(0, 1),
@@ -33,5 +35,12 @@ public enum Direction {
             case E -> W;
             case W -> E;
         };
+    }
+
+    public static Direction of(int row, int col) {
+        return Stream.of(Direction.values())
+            .filter(dir -> dir.getRow() == row && dir.getColumn() == col)
+            .findFirst()
+            .orElseThrow();
     }
 }
