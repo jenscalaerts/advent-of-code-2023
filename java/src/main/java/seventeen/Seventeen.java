@@ -18,82 +18,111 @@ import grid.Grid;
 public class Seventeen {
     public static void main(String[] args) throws IOException {
         Grid grid = new Grid(Files.readString(Path.of(args[0])));
+        new OptimalRouteCalculator(grid, 1, 3).calculate();
+        new OptimalRouteCalculator(grid, 4, 10).calculate();
+    }
+
+}
+
+class OptimalRouteCalculator {
+    private final Grid grid;
+    private final int minDistance;
+    private final int maxDistance;
+    private Map<Coordinate, CauldronPath> horizontalOptimals;
+    private Map<Coordinate, CauldronPath> verticalOptimals;
+
+    public OptimalRouteCalculator(Grid grid, int minDistance, int maxDistance) {
+        this.grid = grid;
+        this.minDistance = minDistance;
+        this.maxDistance = maxDistance;
         Coordinate begin = new Coordinate(0, 0);
-        List<CauldronPath> horizontals = generateVectors(begin, Direction.E)
+        horizontalOptimals = generateVectors(begin, Direction.E)
                 .map(vec -> initializePath(grid, vec))
-                .collect(Collectors.toList());
-        Map<Coordinate, CauldronPath> horizontalOptimals = horizontals.stream()
                 .collect(Collectors.toMap(i -> i.getEnd().getEnd(), i -> i));
-        List<CauldronPath> verticals = generateVectors(begin, Direction.S)
+        verticalOptimals = generateVectors(begin, Direction.S)
                 .map(vec -> initializePath(grid, vec))
-                .collect(Collectors.toList());
-        Map<Coordinate, CauldronPath> verticalOptimals = verticals.stream()
                 .collect(Collectors.toMap(i -> i.getEnd().getEnd(), i -> i));
-        verticals.addAll(horizontals);
-        List<CauldronPath> newPaths = verticals;
+    }
+
+    public void calculate() {
+
+        List<CauldronPath> newPaths = new ArrayList<>();
+        newPaths.addAll(horizontalOptimals.values());
+        newPaths.addAll(verticalOptimals.values());
+
         while (!newPaths.isEmpty()) {
             List<CauldronPath> processingPaths = newPaths;
             newPaths = new ArrayList<>();
             for (CauldronPath path : processingPaths) {
                 Vector end = path.getEnd();
                 if (end.direction().isVertical()) {
-                    List<CauldronPath> newOptimals = generateHorizontal(end.getEnd())
-                            .filter(vec -> grid.contains(vec.getEnd()))
-                            .filter(vec -> !horizontalOptimals.containsKey(vec.getEnd())
-                                    || horizontalOptimals.get(vec.getEnd()).getHeathLoss() > path.getHeathLoss()
-                                            + calculateHeathLoss(grid, vec))
-                            .map(vec -> path.add(vec, calculateHeathLoss(grid, vec)))
-                            .toList();
-                    newPaths.addAll(newOptimals);
-                    for (CauldronPath newOptimal : newOptimals) {
-                        horizontalOptimals.put(newOptimal.getEnd().getEnd(), newOptimal);
-                    }
+                    extendVertical(newPaths, path, end);
                 } else {
-                    List<CauldronPath> newOptimals = generateVertical(end.getEnd())
-                            .filter(vec -> grid.contains(vec.getEnd()))
-                            .filter(vec -> !verticalOptimals.containsKey(vec.getEnd())
-                                    || verticalOptimals.get(vec.getEnd()).getHeathLoss() > path.getHeathLoss()
-                                            + calculateHeathLoss(grid, vec))
-                            .map(vec -> path.add(vec, calculateHeathLoss(grid, vec)))
-                            .toList();
-                    newPaths.addAll(newOptimals);
-                    for (CauldronPath newOptimal : newOptimals) {
-                        verticalOptimals.put(newOptimal.getEnd().getEnd(), newOptimal);
-                    }
+                    extendHorizontal(newPaths, path, end);
                 }
             }
         }
-
         Coordinate bottomRight = new Coordinate(grid.getHeight() - 1, grid.getWidth() - 1);
         System.out.println(Math.min(horizontalOptimals.get(bottomRight).getHeathLoss(),
                 verticalOptimals.get(bottomRight).getHeathLoss()));
     }
 
-    private static CauldronPath initializePath(Grid grid, Vector vec) {
+    private void extendHorizontal(List<CauldronPath> newPaths, CauldronPath path, Vector end) {
+        List<CauldronPath> newOptimals = getNewOptimals(verticalOptimals, path,
+                generateVertical(end.getEnd()));
+        newPaths.addAll(newOptimals);
+        for (CauldronPath newOptimal : newOptimals) {
+            verticalOptimals.put(newOptimal.getEnd().getEnd(), newOptimal);
+        }
+    }
+
+    private void extendVertical(List<CauldronPath> newPaths, CauldronPath path, Vector end) {
+        List<CauldronPath> newOptimals = getNewOptimals(horizontalOptimals, path,
+                generateHorizontal(end.getEnd()));
+        newPaths.addAll(newOptimals);
+        for (CauldronPath newOptimal : newOptimals) {
+            horizontalOptimals.put(newOptimal.getEnd().getEnd(), newOptimal);
+        }
+    }
+
+    private List<CauldronPath> getNewOptimals(Map<Coordinate, CauldronPath> horizontalOptimals, CauldronPath path,
+            Stream<Vector> horizontal) {
+        List<CauldronPath> newOptimals = horizontal
+                .filter(vec -> grid.contains(vec.getEnd()))
+                .filter(vec -> !horizontalOptimals.containsKey(vec.getEnd())
+                        || horizontalOptimals.get(vec.getEnd()).getHeathLoss() > path.getHeathLoss()
+                                + calculateHeathLoss(grid, vec))
+                .map(vec -> path.add(vec, calculateHeathLoss(grid, vec)))
+                .toList();
+        return newOptimals;
+    }
+
+    private CauldronPath initializePath(Grid grid, Vector vec) {
         int heathloss = calculateHeathLoss(grid, vec);
         return new CauldronPath(vec, heathloss);
     }
 
-    private static int calculateHeathLoss(Grid grid, Vector vec) {
+    private int calculateHeathLoss(Grid grid, Vector vec) {
         return vec.getParts()
                 .mapToInt(coord -> Character.getNumericValue(grid.getSymbolAt(coord)))
                 .sum();
     }
 
-    public static Stream<Vector> generateHorizontal(Coordinate coord) {
+    public Stream<Vector> generateHorizontal(Coordinate coord) {
         return Stream.concat(generateVectors(coord, Direction.E),
                 generateVectors(coord, Direction.W));
     }
 
-    public static Stream<Vector> generateVertical(Coordinate coord) {
+    public Stream<Vector> generateVertical(Coordinate coord) {
         return Stream.concat(generateVectors(coord, Direction.N),
                 generateVectors(coord, Direction.S));
     }
 
-    public static Stream<Vector> generateVectors(Coordinate coordinate, Direction direction) {
-        return IntStream.range(1, 4)
+    public Stream<Vector> generateVectors(Coordinate coordinate, Direction direction) {
+        return IntStream.range(minDistance, maxDistance + 1)
                 .mapToObj(i -> new Vector(coordinate, direction, i));
     }
+
 }
 
 record Vector(Coordinate location, Direction direction, int length) {
