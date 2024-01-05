@@ -3,7 +3,9 @@ package twenty;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -23,20 +25,18 @@ public class Twenty {
                 .flatMap(input -> Arrays.stream(input.targets()).map(i -> new String[] { input.name(), i }))
                 .collect(Collectors.groupingBy(ar -> ar[1], Collectors.mapping(ar -> ar[0], Collectors.toList())));
 
-        Map<String, Module> modules = list.stream()
-                .map(input -> new Module(input.name(), List.of(input.targets()),
-                        createStrategy(input.type(), inputs.get(input.name()))))
-                .collect(Collectors.toMap(Module::name, Function.identity()));
+        solve1(Integer.parseInt(args[1]), getModules(list, inputs));
+        solve2(getModules(list, inputs), inputs.get("cs"));
+    }
 
+    private static void solve1(int numberOfIterations, Map<String, Module> modules) {
         int lowPulses = 0;
         int highPulses = 0;
-        for (int i = 0; i < Integer.parseInt(args[1]); i++) {
+        for (int i = 0; i < numberOfIterations; i++) {
             Queue<Pulse> queue = new LinkedList<Pulse>();
             queue.add(new Pulse("", "broadcaster", false));
-
             do {
                 Pulse pulse = queue.poll();
-                System.out.println(pulse);
                 if (pulse.level())
                     highPulses++;
                 else
@@ -46,10 +46,57 @@ public class Twenty {
                     module.handle(pulse).forEach(queue::add);
             } while (!queue.isEmpty());
         }
-        System.out.println(lowPulses);
-        System.out.println(highPulses);
         System.out.println(Math.multiplyFull(lowPulses, highPulses));
+    }
 
+    private static void solve2(Map<String, Module> modules, List<String> list) {
+        HashMap<String, List<Integer>> collection = new HashMap<>();
+        list.forEach(i -> collection.put(i, new ArrayList<>()));
+        long solution = findLowPulse(modules, collection);
+
+        System.out.println("2: " + solution);
+    }
+
+    private static long findLowPulse(Map<String, Module> modules, HashMap<String, List<Integer>> inputs) {
+        int i = 0;
+        while(!inputs.values().stream().allMatch(list->list.size() > 0)){
+            Queue<Pulse> queue = new LinkedList<Pulse>();
+            queue.add(new Pulse("", "broadcaster", false));
+            i++;
+            do {
+                Pulse pulse = queue.poll();
+
+                if (pulse.target().equals("cs") && pulse.level()){
+                    inputs.get(pulse.source()).add(i);
+                }
+                Module module = modules.get(pulse.target());
+                if (module != null)
+                    module.handle(pulse).forEach(queue::add);
+            } while (!queue.isEmpty());
+            System.out.println(inputs);
+        }
+        return inputs.values().stream().map(list->(long)list.get(0)).reduce((l,r) -> lcm(l,r)).orElseThrow();
+    }
+
+    public static long lcm(long left, long right) {
+        return Math.multiplyExact(Math.divideExact(left, gcd(left, right)), right);
+    }
+
+    private static long gcd(long left, long right) {
+        while (right != 0) {
+            long t = right;
+            right = left % right;
+            left = t;
+        }
+        return left;
+    }
+
+    private static Map<String, Module> getModules(List<Input> list, Map<String, List<String>> inputs) {
+        Map<String, Module> modules = list.stream()
+                .map(input -> new Module(input.name(), List.of(input.targets()),
+                        createStrategy(input.type(), inputs.get(input.name()))))
+                .collect(Collectors.toMap(Module::name, Function.identity()));
+        return modules;
     }
 
     public static EmissionLevelStrategy createStrategy(char type, List<String> inputs) {
@@ -68,9 +115,9 @@ record Pulse(String source, String target, boolean level) {
 
     @Override
     public String toString() {
-        return "%s -%s-> %s".formatted(source(), level() ? "high":"low",target());
+        return "%s -%s-> %s".formatted(source(), level() ? "high" : "low", target());
     }
-    
+
 }
 
 record Input(String name, String[] targets, char type) {
